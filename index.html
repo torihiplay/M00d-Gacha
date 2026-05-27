@@ -2,90 +2,56 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1080, initial-scale=0.35">
 <title>心情拉霸機</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{
-  width:1080px;height:1920px;
-  overflow:hidden;
-  background:#020510;
-}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#020510;}
 #bg{
-  position:fixed;inset:0;
-  width:1080px;height:1440px;
-  top:0;left:0;
+  position:fixed;inset:0;width:1080px;height:1440px;top:0;left:0;
   background:url('1.png') no-repeat top center / 1080px auto;
-  z-index:20;
-  pointer-events:none;
+  z-index:20;pointer-events:none;
 }
-#bg-ext{
-  position:fixed;
-  top:1440px;left:0;
-  width:1080px;height:480px;
-  background:#020510;
-  z-index:0;
-}
+#bg-ext{position:fixed;top:1440px;left:0;width:1080px;height:480px;background:#020510;z-index:0;}
 #reel-overlay{
-  position:absolute;
-  top:254px;left:260px;
+  position:absolute;top:254px;left:292px;
   width:554px;height:699px;
   z-index:5;overflow:hidden;border-radius:6px;
 }
-#reels{
-  display:flex;
-  width:100%;height:100%;
-  overflow:hidden;
-}
+#reels{display:flex;width:100%;height:100%;overflow:hidden;}
 .reel{
-  flex-shrink:0;
-  overflow:hidden;position:relative;
-  background:#07091a;
+  flex-shrink:0;overflow:hidden;position:relative;background:#07091a;
 }
-.reel:not(:last-child){
-  border-right:3px solid rgba(100,70,10,0.5);
-}
+.reel:not(:last-child){border-right:3px solid rgba(100,70,10,0.5);}
 .reel::before,.reel::after{
   content:'';position:absolute;left:0;right:0;height:100px;z-index:10;pointer-events:none;
 }
 .reel::before{top:0;background:linear-gradient(to bottom,#07091a 0%,rgba(7,9,26,0.5) 60%,transparent 100%);}
 .reel::after{bottom:0;background:linear-gradient(to top,#07091a 0%,rgba(7,9,26,0.5) 60%,transparent 100%);}
-.track{
-  position:absolute;top:0;left:0;width:100%;
-  display:flex;flex-direction:column;
-  will-change:transform;
-}
+.track{position:absolute;top:0;left:0;width:100%;display:flex;flex-direction:column;will-change:transform;}
 .card{
   width:100%;height:233px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:#07091a;
-  border-bottom:1px solid rgba(100,70,10,0.3);
-  overflow:hidden;
+  background:#07091a;border-bottom:1px solid rgba(100,70,10,0.3);overflow:hidden;
 }
-.card-frame{
-  width:210px;height:210px;
-  flex-shrink:0;
-  background-repeat:no-repeat;
-}
+.card-frame{flex-shrink:0;background-repeat:no-repeat;}
 #win-bar{
   position:absolute;left:0;right:0;
-  top:calc(50% + 80px);transform:translateY(-50%);
-  height:3px;
-  background:linear-gradient(90deg,transparent,#ffd700,#fff8,#ffd700,transparent);
-  box-shadow:0 0 32px #ffd700,0 0 64px #ff8800;
+  top:calc(41% + 77px);transform:translateY(-50%);
+  height:9px;
+  background:linear-gradient(90deg,transparent,#00eeff,#ffffff,#00eeff,transparent);
+  box-shadow:0 0 32px #00eeff,0 0 64px #0088ff;
   z-index:20;pointer-events:none;
   animation:winpulse 1s ease-in-out infinite alternate;
 }
 @keyframes winpulse{
-  0%{opacity:0.7;box-shadow:0 0 24px #ffd700,0 0 48px #ff8800}
-  100%{opacity:1;box-shadow:0 0 48px #fff,0 0 96px #ffd700,0 0 160px rgba(255,140,0,0.5)}
+  0%{opacity:0.7;box-shadow:0 0 24px #00eeff,0 0 48px #0088ff}
+  100%{opacity:1;box-shadow:0 0 48px #fff,0 0 96px #00eeff,0 0 160px #0088ff}
 }
 </style>
 </head>
 <body>
 <div id="bg"></div>
 <div id="bg-ext"></div>
-
 <div id="reel-overlay">
   <div id="win-bar"></div>
   <div id="reels">
@@ -94,9 +60,8 @@ html,body{
     <div class="reel" id="reel2"><div class="track" id="t2"></div></div>
   </div>
 </div>
-
 <script>
-const SHEETS = {
+const SHEETS={
   2:{file:'2.png',iw:1254,ih:1254,x:[[4,315],[316,628],[627,939],[938,1252]],y:[[3,317],[316,628],[626,924],[922,1243]]},
   3:{file:'3.png',iw:1254,ih:1254,x:[[2,317],[312,628],[623,940],[935,1251]],y:[[2,334],[331,642],[639,947],[942,1253]]},
   4:{file:'4.png',iw:1254,ih:1254,x:[[4,317],[316,627],[624,937],[935,1249]],y:[[5,334],[331,640],[636,938],[934,1250]]},
@@ -107,15 +72,15 @@ const SHEETS = {
   9:{file:'9.png',iw:1254,ih:1254,x:[[0,316],[311,629],[625,941],[937,1254]],y:[[2,318],[314,629],[625,932],[929,1238]]},
 };
 
-let frameW=210, frameH=210;
-let imgScaleX=1.0, imgScaleY=1.0;
-let imgXOffset=0, imgYOffset=0;
-let colWidths=[184,184,184];
+const frameW=210, frameH=239;
+const imgScaleX=0.80, imgScaleY=1.00;
+const imgXOffset=20, imgYOffset=0;
+const colWidths=[164,170,164];
 
 function getSpriteInfo(id){
   const si=Math.floor((id-1)/16)+2;
   const ci=(id-1)%16;
-  const col=ci%4, row=Math.floor(ci/4);
+  const col=ci%4,row=Math.floor(ci/4);
   const s=SHEETS[si];
   return{file:s.file,iw:s.iw,ih:s.ih,
     sx:s.x[col][0],sy:s.y[row][0],
@@ -124,7 +89,7 @@ function getSpriteInfo(id){
 
 function applyFrameStyle(el,id){
   const{file,iw,ih,sx,sy,sw,sh}=getSpriteInfo(id);
-  const dispW=frameW*imgScaleX, dispH=frameH*imgScaleY;
+  const dispW=frameW*imgScaleX,dispH=frameH*imgScaleY;
   const bgW=Math.round(iw/sw*dispW);
   const bgH=Math.round(ih/sh*dispH);
   const bgX=Math.round(-(sx/sw)*dispW)+imgXOffset;
@@ -134,7 +99,7 @@ function applyFrameStyle(el,id){
   el.style.backgroundPosition=`${bgX}px ${bgY}px`;
 }
 
-let CARD_H=233;
+const CARD_H=233;
 const LAPS=[4,3,2];
 const preCount=4;
 
@@ -149,43 +114,33 @@ const seqs=LAPS.map(laps=>{let s=[];for(let l=0;l<laps;l++)s=s.concat(shuffle(id
 const tracks=[document.getElementById('t0'),document.getElementById('t1'),document.getElementById('t2')];
 const reelEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
 
-function applyColWidths(){
-  reelEls.forEach((r,i)=>r.style.width=colWidths[i]+'px');
-}
+reelEls.forEach((r,i)=>r.style.width=colWidths[i]+'px');
 
-function buildCards(){
-  tracks.forEach(tr=>tr.innerHTML='');
-  seqs.forEach((seq,ri)=>{
-    const tr=tracks[ri];
-    const pre=seq.slice(-preCount);
-    [...pre,...seq].forEach(id=>{
-      const d=document.createElement('div');
-      d.className='card';
-      const frame=document.createElement('div');
-      frame.className='card-frame';
-      frame.dataset.id=id;
-      frame.style.width=frameW+'px';
-      frame.style.height=frameH+'px';
-      applyFrameStyle(frame,id);
-      d.appendChild(frame);
-      tr.appendChild(d);
-    });
+seqs.forEach((seq,ri)=>{
+  const tr=tracks[ri];
+  const pre=seq.slice(-preCount);
+  [...pre,...seq].forEach(id=>{
+    const d=document.createElement('div');
+    d.className='card';
+    const frame=document.createElement('div');
+    frame.className='card-frame';
+    frame.style.width=frameW+'px';
+    frame.style.height=frameH+'px';
+    applyFrameStyle(frame,id);
+    d.appendChild(frame);
+    tr.appendChild(d);
   });
-}
-
-applyColWidths();
-buildCards();
+});
 
 const loopPx=seqs.map(s=>s.length*CARD_H);
 const speeds=[1.0,0.93,1.07];
-let startTs=null, pausedAt=0, isStopped=false;
+let startTs=null;
 
 function tick(ts){
-  if(isStopped)return;
   if(!startTs)startTs=ts;
-  const elapsed=(ts-startTs)+pausedAt;
+  const elapsed=ts-startTs;
   seqs.forEach((_,ri)=>{
-    const px=(elapsed*speeds[ri]*0.96)%loopPx[ri];
+    const px=(elapsed*speeds[ri]*1.92)%loopPx[ri];
     tracks[ri].style.transform=`translateY(-${preCount*CARD_H+px}px)`;
   });
   requestAnimationFrame(tick);
