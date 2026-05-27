@@ -102,7 +102,7 @@ function applyFrameStyle(el,id){
 
 const CARD_H=233;
 const LAPS=[4,3,2];
-const preCount=4;
+const speeds=[1.0,0.93,1.07];
 
 function shuffle(a){
   const b=[...a];
@@ -111,16 +111,25 @@ function shuffle(a){
 }
 
 const ids=Array.from({length:128},(_,i)=>i+1);
-const seqs=LAPS.map(laps=>{let s=[];for(let l=0;l<laps;l++)s=s.concat(shuffle(ids));return s;});
+
+// 每條 reel 建立 seq，然後在 DOM 放 [seq, seq] 雙份
+// 捲動超過第一份時無縫跳回開頭，完全沒有接縫問題
+const seqs=LAPS.map(laps=>{
+  let s=[];
+  for(let l=0;l<laps;l++) s=s.concat(shuffle(ids));
+  return s;
+});
+
 const tracks=[document.getElementById('t0'),document.getElementById('t1'),document.getElementById('t2')];
 const reelEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
 
 reelEls.forEach((r,i)=>r.style.width=colWidths[i]+'px');
 
+// 每條 reel 塞兩份 seq（雙 buffer），這樣只要在第一份結束前跳回就永遠無縫
 seqs.forEach((seq,ri)=>{
   const tr=tracks[ri];
-  const pre=seq.slice(-preCount);
-  [...pre,...seq].forEach(id=>{
+  // 塞兩份
+  [...seq,...seq].forEach(id=>{
     const d=document.createElement('div');
     d.className='card';
     const frame=document.createElement('div');
@@ -133,20 +142,48 @@ seqs.forEach((seq,ri)=>{
   });
 });
 
+// loopPx = 一份 seq 的總高度
 const loopPx=seqs.map(s=>s.length*CARD_H);
-const speeds=[1.0,0.93,1.07];
-let startTs=null;
+
+// 每條 reel 各自維護一個累積位移（px），不用 elapsed%loop，避免跳接
+const pos=[0,0,0];
+let lastTs=null;
 
 function tick(ts){
-  if(!startTs)startTs=ts;
-  const elapsed=ts-startTs;
+  if(lastTs===null){lastTs=ts;}
+  const dt=ts-lastTs;
+  lastTs=ts;
+
   seqs.forEach((_,ri)=>{
-    const px=(elapsed*speeds[ri]*1.92)%loopPx[ri];
-    tracks[ri].style.transform=`translateY(-${preCount*CARD_H+px}px)`;
+    pos[ri]+=dt*speeds[ri]*1.92*0.001*1000; // dt 單位 ms，每秒跑 speeds*1.92*1000 px？
+    // 修正：原本 elapsed*1.92 是每毫秒跑 1.92px → 每秒 1920px
+    // dt ms → pos += dt * speeds * 1.92
+    pos[ri]+=0; // 上面已算，這行是多的，下面重算
+
+    // 當超過一份 seq 就跳回（無縫，因為第二份內容完全一樣）
+    if(pos[ri]>=loopPx[ri]) pos[ri]-=loopPx[ri];
+    tracks[ri].style.transform=`translateY(-${pos[ri]}px)`;
   });
   requestAnimationFrame(tick);
 }
-requestAnimationFrame(tick);
+
+// 重新正確實作
+pos[0]=pos[1]=pos[2]=0;
+lastTs=null;
+
+function tick2(ts){
+  if(lastTs===null){lastTs=ts;}
+  const dt=ts-lastTs; // ms
+  lastTs=ts;
+
+  for(let ri=0;ri<3;ri++){
+    pos[ri]+=dt*speeds[ri]*1.92; // px，跟原本 elapsed*speeds*1.92 速度一致
+    if(pos[ri]>=loopPx[ri]) pos[ri]-=loopPx[ri];
+    tracks[ri].style.transform=`translateY(-${pos[ri]}px)`;
+  }
+  requestAnimationFrame(tick2);
+}
+requestAnimationFrame(tick2);
 </script>
 </body>
 </html>
