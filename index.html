@@ -2,26 +2,39 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1080, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>心情拉霸機</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:1080px;height:1920px;overflow:hidden;background:#020510;}
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  background:#020510;
+  display:flex;align-items:flex-start;justify-content:center;
+}
+#app{
+  position:relative;
+  width:1080px;height:1920px;
+  transform-origin:top center;
+  background:#020510;
+  overflow:hidden;
+}
 #bg{
-  position:fixed;inset:0;width:1080px;height:1440px;top:0;left:0;
+  position:absolute;inset:0;
+  width:1080px;height:1440px;
+  top:0;left:0;
   background:url('1.png') no-repeat top center / 1080px auto;
   z-index:20;pointer-events:none;
 }
-#bg-ext{position:fixed;top:1440px;left:0;width:1080px;height:480px;background:#020510;z-index:0;}
+#bg-ext{position:absolute;top:1440px;left:0;width:1080px;height:480px;background:#020510;z-index:0;}
+
 #reel-overlay{
   position:absolute;top:254px;left:292px;
   width:554px;height:699px;
   z-index:5;overflow:hidden;border-radius:6px;
 }
 #reels{display:flex;width:100%;height:100%;overflow:hidden;}
-.reel{
-  flex-shrink:0;overflow:hidden;position:relative;background:#07091a;
-}
+.reel{flex-shrink:0;overflow:hidden;position:relative;background:#07091a;}
 .reel:not(:last-child){border-right:3px solid rgba(100,70,10,0.5);}
 .reel::before,.reel::after{
   content:'';position:absolute;left:0;right:0;height:100px;z-index:10;pointer-events:none;
@@ -34,7 +47,12 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#020510;}
   display:flex;align-items:center;justify-content:center;
   background:#07091a;border-bottom:1px solid rgba(100,70,10,0.3);overflow:hidden;
 }
-.card-frame{flex-shrink:0;background-repeat:no-repeat;}
+.card-img{
+  width:180px;height:180px;
+  object-fit:contain;
+  display:block;
+}
+
 #win-bar{
   position:absolute;left:0;right:0;
   top:calc(41% + 77px);transform:translateY(-50%);
@@ -48,142 +66,406 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#020510;}
   0%{opacity:0.7;box-shadow:0 0 24px #00eeff,0 0 48px #0088ff}
   100%{opacity:1;box-shadow:0 0 48px #fff,0 0 96px #00eeff,0 0 160px #0088ff}
 }
+
+#gacha-btn{
+  position:absolute;
+  left:50%;transform:translateX(-50%);
+  top:1233px;
+  width:330px;height:145px;
+  border-radius:50px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  z-index:30;
+}
+#gacha-btn:active{transform:translateX(-50%) scale(0.96);}
+
+/* ── 結果面板 ── */
+#result-panel{
+  position:absolute;
+  bottom:0;left:4%;right:4%;
+  height:88%;
+  background:linear-gradient(170deg,#0a0820 0%,#0d1535 40%,#0a0820 100%);
+  border-top:2px solid rgba(255,215,0,0.5);
+  border-radius:36px 36px 0 0;
+  z-index:100;
+  transform:translateY(100%);
+  transition:transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+#result-panel.show{transform:translateY(0);}
+
+.panel-handle{
+  width:60px;height:5px;
+  background:rgba(255,215,0,0.4);
+  border-radius:3px;
+  margin:14px auto 0;flex-shrink:0;
+}
+.panel-title{
+  text-align:center;font-size:38px;font-weight:900;
+  color:#ffd700;letter-spacing:3px;
+  margin:16px 0 4px;flex-shrink:0;
+  text-shadow:0 0 20px rgba(255,215,0,0.5);
+}
+.panel-subtitle{
+  text-align:center;font-size:24px;color:rgba(255,215,0,0.6);
+  margin-bottom:12px;flex-shrink:0;
+}
+
+/* 三張卡片 */
+.cards-row{
+  display:flex;gap:16px;
+  padding:0 24px;flex-shrink:0;
+  justify-content:center;
+}
+.result-card{
+  flex:1;max-width:280px;
+  background:rgba(255,255,255,0.04);
+  border:1.5px solid rgba(255,215,0,0.25);
+  border-radius:20px;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;
+}
+.result-card-img{
+  width:100%;aspect-ratio:1;
+  object-fit:contain;
+  background:#07091a;
+  display:block;
+}
+.result-card-label{
+  font-size:21px;color:#ffd700;font-weight:700;
+  padding:8px 6px 10px;text-align:center;
+  letter-spacing:1px;
+}
+
+/* 解析內容 */
+.content-area{
+  flex:1;overflow-y:auto;
+  padding:24px 28px 16px;
+  -webkit-overflow-scrolling:touch;
+}
+.content-area::-webkit-scrollbar{width:4px;}
+.content-area::-webkit-scrollbar-thumb{background:rgba(255,215,0,0.3);border-radius:2px;}
+
+.reading-block{margin-bottom:32px;}
+.reading-who{
+  font-size:26px;font-weight:700;color:#ffd700;
+  margin-bottom:10px;
+  display:flex;align-items:center;gap:10px;
+}
+.reading-who::before{
+  content:'';display:inline-block;
+  width:5px;height:28px;
+  background:#ffd700;border-radius:3px;flex-shrink:0;
+}
+.reading-text{
+  font-size:26px;line-height:1.85;
+  color:rgba(255,255,255,0.88);
+}
+.reading-text.placeholder{
+  color:rgba(255,255,255,0.3);
+  font-style:italic;letter-spacing:2px;
+}
+
+.panel-btns{
+  display:flex;gap:16px;
+  padding:16px 24px 36px;flex-shrink:0;
+}
+.btn-share{
+  flex:1;padding:22px 0;
+  background:linear-gradient(135deg,#06c755,#00a846);
+  color:#fff;font-size:28px;font-weight:900;
+  border:none;border-radius:16px;cursor:pointer;
+  letter-spacing:2px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-again{
+  flex:1;padding:22px 0;
+  background:linear-gradient(135deg,#c8900a,#ffd700,#c8900a);
+  color:#000;font-size:28px;font-weight:900;
+  border:none;border-radius:16px;cursor:pointer;
+  letter-spacing:2px;
+}
+.btn-share:active,.btn-again:active{transform:scale(0.97);}
+
+#overlay{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,0);
+  z-index:99;pointer-events:none;
+  transition:background 0.3s;
+}
+#overlay.show{background:rgba(0,0,0,0.55);pointer-events:auto;}
 </style>
 </head>
 <body>
-<div id="bg"></div>
-<div id="bg-ext"></div>
-<div id="reel-overlay">
-  <div id="win-bar"></div>
-  <div id="reels">
-    <div class="reel" id="reel0"><div class="track" id="t0"></div></div>
-    <div class="reel" id="reel1"><div class="track" id="t1"></div></div>
-    <div class="reel" id="reel2"><div class="track" id="t2"></div></div>
+<div id="app">
+  <div id="bg"></div>
+  <div id="bg-ext"></div>
+
+  <div id="reel-overlay">
+    <div id="win-bar"></div>
+    <div id="reels">
+      <div class="reel" id="reel0"><div class="track" id="t0"></div></div>
+      <div class="reel" id="reel1"><div class="track" id="t1"></div></div>
+      <div class="reel" id="reel2"><div class="track" id="t2"></div></div>
+    </div>
+  </div>
+
+  <button id="gacha-btn" onclick="doGacha()"></button>
+  <div id="overlay" onclick="closePanel()"></div>
+
+  <div id="result-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title">✨ 你的命運揭曉</div>
+    <div class="panel-subtitle" id="panel-names"></div>
+    <div class="cards-row" id="cards-row"></div>
+    <div class="content-area" id="content-area"></div>
+    <div class="panel-btns">
+      <button class="btn-share" onclick="shareToLine()">
+        <span style="font-size:32px">💬</span>分享 LINE
+      </button>
+      <button class="btn-again" onclick="closePanel()">🔄 再抽一次</button>
+    </div>
   </div>
 </div>
+
 <script>
-const SHEETS={
-  2:{file:'2.png',iw:1254,ih:1254,x:[[4,315],[316,628],[627,939],[938,1252]],y:[[3,317],[316,628],[626,924],[922,1243]]},
-  3:{file:'3.png',iw:1254,ih:1254,x:[[2,317],[312,628],[623,940],[935,1251]],y:[[2,334],[331,642],[639,947],[942,1253]]},
-  4:{file:'4.png',iw:1254,ih:1254,x:[[4,317],[316,627],[624,937],[935,1249]],y:[[5,334],[331,640],[636,938],[934,1250]]},
-  5:{file:'5.png',iw:1254,ih:1254,x:[[5,317],[316,628],[625,939],[936,1249]],y:[[4,329],[326,641],[639,952],[950,1248]]},
-  6:{file:'6.png',iw:1254,ih:1254,x:[[4,317],[314,628],[624,939],[935,1249]],y:[[5,330],[327,639],[637,944],[941,1247]]},
-  7:{file:'7.png',iw:1254,ih:1254,x:[[4,317],[314,628],[625,939],[937,1251]],y:[[4,330],[327,640],[638,945],[941,1247]]},
-  8:{file:'8.png',iw:1254,ih:1254,x:[[3,316],[313,627],[624,939],[936,1251]],y:[[3,333],[330,645],[642,930],[925,1223]]},
-  9:{file:'9.png',iw:1254,ih:1254,x:[[0,316],[311,629],[625,941],[937,1254]],y:[[2,318],[314,629],[625,932],[929,1238]]},
+// ══ 縮放 ══
+function scaleApp(){
+  const app=document.getElementById('app');
+  const scale=Math.min(window.innerWidth/1080,window.innerHeight/1920);
+  app.style.transform=`scale(${scale})`;
+  app.style.marginTop=`${(window.innerHeight-1920*scale)/2}px`;
+  document.body.style.height=window.innerHeight+'px';
+}
+scaleApp();
+window.addEventListener('resize',scaleApp);
+
+// ══ 解析資料 ══
+// 格式：id -> { name, emoji, 近況, 挑戰, 貴人 }
+// 沒有資料的欄位填 '###'
+const DATA={
+  1:{name:'幸運星',emoji:'🌟',
+    近況:'你最近正在進入一段「微小幸運開始聚集」的時期。有些事情表面看起來只是巧合，但其實命運已經悄悄偏向你。你可能會發現，原本卡住的人突然回訊息、原本不順的事情突然出現破口，甚至只是走進某個地方，都有種被宇宙偷偷推了一下的感覺。這不是暴富型的幸運，而是「路開始打開」的幸運。很多人抽到幸運星時，人生都正站在下一階段的入口，只是還沒真正意識到。',
+    挑戰:'幸運星真正的問題，是容易讓人誤以為「只要等運氣來就好」。你最近最大的挑戰，其實是猶豫。你可能正在等待某個完美時機、完美答案、完美情緒，但宇宙現在給你的不是結果，而是門縫。如果你一直停在原地分析，幸運就會像流星一樣擦身而過。這段時間尤其容易因為害怕失敗，而假裝自己還沒準備好。有些事情其實不用百分之百確定，你真正缺少的，是往前一步的勇氣。',
+    貴人:'你的貴人通常不是最強勢的人，而是「會讓你重新相信可能性的人」。這個人可能很樂觀、很有生命力，甚至有點孩子氣，但他靠近你之後，你會開始覺得世界沒有那麼沉重。對方可能會在你快放棄時，突然給你一句話、一個機會、一個介紹，讓命運重新轉動。幸運星的貴人常常不像貴人，反而像突然闖進你人生的路人。真正重要的，不是他替你完成什麼，而是他讓你重新敢期待未來。'},
+  2:{name:'烈火',emoji:'🔥',
+    近況:'你最近像站在高溫燃燒的中心。很多事情正在加速，不論是情緒、人際、工作還是內心慾望，都有種快要壓不住的感覺。烈火出現時，通常代表人生已經進入「不能再假裝平靜」的階段。有些人會突然做出重大決定，有些人會突然爆氣離開一段關係，也有人會開始瘋狂投入某件事。你現在的能量其實很強，但也很危險，因為這股火如果沒有出口，就可能先燒到自己。',
+    挑戰:'烈火最大的挑戰，是情緒失控後留下的後果。你最近可能特別容易煩躁、急、沒有耐性，甚至別人一句話就能點燃你。真正危險的不是衝突，而是你內心早就累積太久的壓力。你現在像一座已經過熱的引擎，看起來還能運作，但其實快要爆炸。這段時間不要急著證明自己，也不要在最憤怒的時候做決定。有些關係不是壞掉，而是被高溫燒傷。你真正需要的，不是壓抑，而是找到能安全燃燒的方向。',
+    貴人:'烈火的貴人通常是「敢推動你的人」。這個人可能講話直接、不溫柔，甚至第一次接觸時會讓你有壓迫感，但他會逼你離開停滯狀態。對方像一把點火器，把你原本不敢碰的事情全部點亮。有些人抽到烈火貴人時，會遇到強勢主管、行動力極高的朋友，或某個突然闖進人生的角色。這個人不一定會安慰你，但他會讓你開始動起來。因為你的命運現在需要的，不是保護，而是推進。'},
+  3:{name:'浪潮',emoji:'🌊',
+    近況:'你最近的人生正在進入一種「流動狀態」。很多事情不再固定，情緒也比以前更敏感。你可能會突然懷念某些過去的人，突然對現在的生活感到陌生，或開始產生想離開某個環境的念頭。浪潮並不代表壞事，它更像命運在提醒你：你已經不是原本那個人了。有些關係正在退潮，有些新的方向卻正在慢慢靠近。現在的你，其實正站在變化前的海面，只是還沒真正看清下一座岸。',
+    挑戰:'浪潮最大的挑戰，是太容易被外界情緒牽動。你最近可能會發現，別人的一句話、一個態度，就能影響你整天的狀態。你像海水一樣吸收太多東西，最後反而分不清哪些情緒是自己的。這段時間尤其要小心情緒疲勞與內耗。有些事情不是你的責任，但你卻默默背了起來。浪潮也代表猶豫，你可能一直在「想清楚再決定」，但海水不會因為你準備好才開始流動。真正的課題，是學會在不確定裡前進。',
+    貴人:'你的貴人是那種「讓你能安心做自己的人」。對方可能很安靜、很溫柔，不一定特別耀眼，但他靠近時，你的情緒會慢慢穩定下來。浪潮型貴人很像避風港，會在你最混亂的時候，接住你那些沒說出口的疲憊。有時這個人甚至不用做什麼，只是陪伴，就已經足夠。你最近真正需要的，不是替你衝鋒的人，而是能讓你不用硬撐的人。因為有些海浪，只有在安心時，才會慢慢平靜。'},
+  4:{name:'彩虹',emoji:'🌈',
+    近況:'彩虹出現時，通常代表你剛經歷過某種內在風暴。也許外表看起來沒事，但你的情緒其實已經下過一場很大的雨。現在的你，正在進入「重新看見希望」的階段。有些原本以為過不去的事情，突然開始出現新的角度；有些原本讓你痛苦的人，也慢慢失去控制你的力量。彩虹不是瞬間逆轉人生，而是宇宙在提醒你：最黑的那段路，其實已經快走完了。你最近會開始重新相信未來。',
+    挑戰:'彩虹最大的挑戰，是太快以為一切都好了。你可能很想趕快離開低潮，於是逼自己樂觀、逼自己放下，但有些傷口其實還沒真正癒合。這段時間容易出現「表面恢復正常，內心卻還在流血」的狀態。你也可能會因為害怕再次失望，而不敢真正期待幸福。彩虹的另一面，其實是短暫，它提醒你：希望不是永遠存在，而是需要你親手留住。真正的課題，不是等待天空放晴，而是學會帶著傷繼續往前。',
+    貴人:'彩虹的貴人通常是「把你從黑暗裡拉出來的人」。這個人不一定懂所有道理，但他會在你最灰暗的時候，讓你重新看見生活的顏色。對方可能很會鼓勵人、很有感染力，也可能只是剛好在你最低潮時出現。你會發現，和他相處後，原本壓得你喘不過氣的事情，好像突然沒那麼可怕了。彩虹型貴人帶來的，不只是幫助，而是一種重新相信世界的能力。因為有時候，真正救人的不是答案，而是希望。'},
+  5:{name:'鬼打牆',emoji:'👻',
+    近況:'你最近的人生像陷進某種循環裡。很多事情明明努力過、思考過，卻還是回到原點。你可能開始懷疑自己是不是做錯了什麼，甚至有種「不管怎麼選都不對」的感覺。鬼打牆通常出現在命運卡關期，它不是懲罰，而是一種強迫停下來的訊號。有些人抽到這個符號時，會一直重複遇到類似的人、類似的問題、類似的情緒。宇宙不是不讓你前進，而是有些東西，你還沒真正看清。',
+    挑戰:'鬼打牆最大的挑戰，是你會開始懷疑自己的直覺。你最近可能一直在找答案，但越找越亂。真正困住你的，很多時候不是外界，而是你不願承認的內心。也許你早就知道某段關係不對、某條路走不通，但你還在期待奇蹟發生。這段時間容易陷入過度分析、過度回想、過度後悔。你像在迷宮裡繞圈，但出口其實一直都存在。真正可怕的不是迷路，而是你開始習慣待在迷路裡。',
+    貴人:'鬼打牆的貴人通常是「點醒你的人」。這個人不一定溫柔，甚至可能一開始讓你不舒服，但他會直接拆穿你一直逃避的東西。對方像一面鏡子，把你不想看的真相照出來。有時是一句話，有時是一場衝突，有時甚至只是某個突然離開你的人。鬼打牆型貴人不會替你開門，但會讓你終於發現門其實就在旁邊。因為你現在真正需要的，不是安慰，而是清醒。'},
+  6:{name:'財神到',emoji:'💰',
+    近況:'你最近正在進入一段「資源開始靠近」的時期。財神到不一定代表立刻暴富，而是代表你的價值正在被看見。你可能會開始收到新的合作、賺錢機會、別人的主動邀請，或者突然發現某項能力其實很值錢。這是一種能量回流的象徵，過去你累積的東西，正在慢慢產生結果。不過財神到也代表慾望變強，你會開始更在意未來、成就與安全感。這段時間，很多選擇都會直接影響你接下來的命運方向。',
+    挑戰:'財神到最大的挑戰，是容易被「得到更多」吞沒。你最近可能開始變得焦慮，明明已經比以前好了，卻還是覺得不夠。這段時間特別容易陷入比較、過度工作、害怕失去機會。你可能會把所有事情都變成利益計算，最後反而失去真正重要的東西。財神的另一面，其實是考驗。宇宙現在正在看：當機會真的來了，你會被慾望控制，還是能守住自己的核心。因為不是所有賺得到的東西，都值得你交換人生。',
+    貴人:'財神到的貴人通常是「能帶你進入新世界的人」。對方可能有人脈、資源、商業頭腦，或單純比你更早看懂機會。他會讓你接觸到原本碰不到的圈子，也可能改變你對金錢的想法。這種貴人不一定感性，但非常實際。你會發現，他出現後，你開始敢把夢想當成真正能實現的事情。財神型貴人最重要的，不只是給你錢，而是讓你看見自己的價值原來可以被世界交換。'},
+  7:{name:'慢龜',emoji:'🐢',
+    近況:'你最近的人生節奏，正在被迫慢下來。很多事情不像以前那樣快速推進，甚至有種停滯感。你可能會懷疑自己是不是落後了，看著別人一直往前，而自己還卡在原地。但慢龜出現時，通常代表宇宙正在幫你避開某種危險。現在這段時間，看似延遲，其實是在重新校正方向。有些事情如果太快得到，反而會在未來崩掉。你現在需要的，不是衝刺，而是穩定地活下來。',
+    挑戰:'慢龜最大的挑戰，是焦慮。你最近很容易因為看不到成果，就開始否定自己。尤其當別人一直進步、一直改變時，你會更懷疑自己是不是太慢了。但真正危險的，其實是你因為害怕落後，而亂改方向。這段時間要小心過度比較與急著證明自己。慢並不代表失敗，只是你的命運不是走爆發路線。有些人是煙火，有些人是長河。你現在最大的課題，是學會相信那些還沒開花的累積。',
+    貴人:'慢龜的貴人通常是「能讓你穩下來的人」。這個人可能成熟、有耐心，甚至比你更慢，但他不會被外界節奏輕易影響。和他相處時，你會慢慢停止那種一直想追趕世界的疲憊感。對方可能不會突然改變你的人生，但會陪你把基礎真正打穩。慢龜型貴人很像長途旅伴，他不一定最耀眼，卻是最後還留在你身邊的人。因為有些命運，不是靠爆衝完成，而是靠長久支撐。'},
+  8:{name:'獅王貴人',emoji:'🦁',
+    近況:'你最近正在靠近一股很強的能量。這段時間，你可能會開始接觸權威人物、領導型角色，或突然被推到更顯眼的位置。獅王出現時，通常代表命運正在逼你「變大」。你不能再像以前那樣躲在人群後面，因為很多事情已經開始需要你站出來。你內心其實知道，自己正在進入新的階段，只是還沒完全適應那種被看見的壓力。現在的你，正在學習怎麼駕馭自己的力量。',
+    挑戰:'獅王最大的挑戰，是自尊與控制慾。你最近可能會很在意別人的眼光，也容易因為被否定而情緒受傷。有些人抽到這個符號時，會開始陷入「一定要證明自己」的狀態。你現在最大的危險，不是能力不足，而是太害怕失敗。這段時間也要小心權力衝突，尤其在人際與工作上。獅子的力量很強，但如果只剩下咆哮，就會變成孤獨。真正的王者，不是壓過所有人，而是能穩住整個局面。',
+    貴人:'獅王貴人代表你會遇到「真正有份量的人」。對方可能是主管、前輩、老師，或某個本身就很有影響力的人。他不一定對每個人都好，但會特別注意到你的潛力。這種人通常眼光很高，也不太會隨便誇獎人，所以一旦願意拉你一把，影響會非常大。獅王型貴人有時候甚至像命運中的伯樂，他會逼你離開舒適圈，讓你開始相信自己真的能走到更高的位置。'},
+  9:{name:'毒菇',emoji:'🍄',
+    近況:'你最近正在靠近某種「表面誘人、實際危險」的狀態。有些東西看起來很美、很輕鬆、很讓人心動，但你的直覺其實早就隱隱不安。毒菇出現時，通常代表命運正在測試你的辨識能力。你可能會遇到看似完美的人際、合作、感情或機會，但背後其實藏著代價。這段時間尤其容易被短暫快樂吸引，等回過神時，才發現自己已經陷進去。真正危險的東西，往往不是恐怖，而是太迷人。',
+    挑戰:'毒菇最大的挑戰，是你會開始合理化危險。你明明感覺不對，卻還是不斷替對方找理由；明明知道某條路有問題，卻因為捨不得而繼續往前。你最近很容易陷入「再一下就好」的循環。這個符號也代表精神消耗，有些東西正在慢慢侵蝕你的能量，但它不會立刻爆炸，而是讓你逐漸麻木。現在真正需要小心的，不是敵人，而是那些讓你失去判斷力的誘惑。因為最深的陷阱，通常都長得像禮物。',
+    貴人:'毒菇的貴人通常是「把你拉回現實的人」。這個人可能很理性、很冷靜，甚至有點掃興，但他會在你快陷進幻覺時提醒你真相。對方不一定懂浪漫，也不一定會順著你的情緒，但他能看見你沒看見的危險。有些人抽到毒菇貴人時，會遇到那種一句話就突然點醒自己的人。這種貴人的存在，不是讓你舒服，而是避免你被吞沒。因為有時候，真正的保護不是安慰，而是阻止你繼續沉下去。'},
+  10:{name:'變臉',emoji:'🎭',
+    近況:'你最近正在經歷一段「身份切換期」。你可能開始在不同人面前展現不同樣子，甚至連自己都不確定哪個才是真正的自己。變臉出現時，通常代表人生角色正在改變。有人會突然成熟、突然冷淡、突然開始隱藏情緒，也有人會發現自己其實早就戴著面具活了很久。你最近很容易感到疲憊，因為你一直在配合不同世界的期待。這個符號不是虛假，而是提醒你：你的人生已經走到必須重新定義自己的階段。',
+    挑戰:'變臉最大的挑戰，是你可能會忘記真實情緒。你最近很容易進入「只要演好就好」的狀態，把很多痛苦藏起來，久了連自己都相信那張面具。有些關係其實早就不對勁，但你仍然維持和平的樣子；有些夢想其實已經不適合你，但你還在演那個舊角色。這段時間尤其要小心情緒斷裂。因為一個人最危險的時候，不是崩潰，而是已經感覺不到自己。你真正需要的，不是演得更好，而是敢不敢停下來面對真心。',
+    貴人:'變臉的貴人通常是「能看穿你的人」。對方可能不會被你的表面騙過，甚至第一次見面就察覺你在隱藏什麼。他不一定會拆穿你，但會讓你慢慢放下防備。你會發現，和這個人在一起時，你不需要刻意表現、不需要扮演任何角色。變臉型貴人很少見，因為真正能接受真實模樣的人並不多。這個人的出現，會讓你重新想起：原來活著，不一定非得一直戴著面具。'},
+  11:{name:'休眠',emoji:'💤',
+    近況:'你最近的人生像進入了低耗能模式。很多事情沒有明顯進展，你的情緒、動力甚至社交慾望都開始下降。休眠並不代表失敗，而是靈魂正在進行某種深層修復。你可能會突然想遠離人群、關掉通知、停止解釋，甚至對過去很在意的事情失去反應。這個符號通常出現在「消耗過度之後」。宇宙現在不是要你衝，而是強迫你停下來。因為有些疲憊，已經不是睡一覺就能恢復。',
+    挑戰:'休眠最大的挑戰，是你會誤以為自己廢掉了。當別人一直前進、一直發光時，你很容易開始責怪自己的停滯。你可能會逼自己重新振作、重新熱情，但身體與情緒其實早就超載。這段時間尤其要小心假性恢復。有些人表面恢復正常，內心卻還是空的。休眠真正可怕的地方，不是慢，而是你一直忽略自己的耗損。現在的課題不是重新燃燒，而是承認：你真的累了。',
+    貴人:'休眠的貴人通常是「不會逼你的人」。這個人可能很安靜、很穩，甚至不太干涉你的生活，但他會讓你感到安全。你不需要在他面前假裝有精神，也不用努力證明自己很好。對方像一個能量避難所，讓你終於能暫時卸下所有防備。有些人抽到休眠貴人時，會遇到一個願意陪你沉默的人。這種人不一定改變你的命運，但他會讓你重新有力氣活下去。'},
+  12:{name:'閃電',emoji:'⚡',
+    近況:'你最近的人生正在進入一段「瞬間改變期」。很多事情可能毫無預警地發生，一通電話、一個消息、一場相遇，就足以徹底改變你的方向。閃電出現時，通常代表命運不再給你慢慢準備的時間。你可能開始感受到強烈不安，也可能突然充滿前所未有的衝勁。這個符號帶有強烈覺醒感，它像黑夜裡突然劃開天空的光，逼你看見那些原本一直逃避的真相。',
+    挑戰:'閃電最大的挑戰，是變化太快。你最近可能會突然失控、突然決定、突然離開，事後才發現自己根本還沒準備好。這段時間尤其要小心衝動與極端情緒。閃電也代表斷裂，有些事情可能會突然結束，某些人會突然消失，甚至原本穩定的東西也可能瞬間翻盤。你真正要學的，不是控制所有變化，而是學會在混亂裡保持清醒。因為命運現在正在加速，而你不能只靠過去的方法活下去。',
+    貴人:'閃電的貴人通常是「突然出現的人」。對方可能很有行動力、很直接，甚至像闖入你人生一樣毫無預警。他會帶來新的資訊、新的世界、新的可能性。有些人抽到閃電貴人時，會在某個極短瞬間遇到改變人生的人。這種貴人不一定陪你很久，但影響非常強烈。他像一道真正的閃電，把你原本灰暗的人生瞬間照亮。你後來可能會發現，很多改變，其實都是從那次相遇開始。'},
 };
 
-const frameW=210, frameH=239;
-const imgScaleX=0.80, imgScaleY=1.00;
-const imgXOffset=20, imgYOffset=0;
-const colWidths=[164,170,164];
-
-function getSpriteInfo(id){
-  const si=Math.floor((id-1)/16)+2;
-  const ci=(id-1)%16;
-  const col=ci%4,row=Math.floor(ci/4);
-  const s=SHEETS[si];
-  return{file:s.file,iw:s.iw,ih:s.ih,
-    sx:s.x[col][0],sy:s.y[row][0],
-    sw:s.x[col][1]-s.x[col][0],sh:s.y[row][1]-s.y[row][0]};
+// 取資料，沒有的用 ### 佔位
+function getData(id){
+  return DATA[id]||{
+    name:`No.${String(id).padStart(3,'0')}`,
+    emoji:'✨',
+    近況:'###',挑戰:'###',貴人:'###'
+  };
 }
 
-function applyFrameStyle(el,id){
-  const{file,iw,ih,sx,sy,sw,sh}=getSpriteInfo(id);
-  const dispW=frameW*imgScaleX,dispH=frameH*imgScaleY;
-  const bgW=Math.round(iw/sw*dispW);
-  const bgH=Math.round(ih/sh*dispH);
-  const bgX=Math.round(-(sx/sw)*dispW)+imgXOffset;
-  const bgY=Math.round(-(sy/sh)*dispH)+imgYOffset;
-  el.style.backgroundImage=`url('${file}')`;
-  el.style.backgroundSize=`${bgW}px ${bgH}px`;
-  el.style.backgroundPosition=`${bgX}px ${bgY}px`;
+// 圖片路徑
+function cardImg(id){
+  return `card_${String(id).padStart(3,'0')}.png`;
 }
 
+// ══ 轉軸 ══
 const CARD_H=233;
-const LAPS=[4,3,2];
+const colWidths=[164,170,164];
 const speeds=[1.0,0.93,1.07];
+const LAPS=[4,3,2];
 
 function shuffle(a){
   const b=[...a];
   for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}
   return b;
 }
-
 const ids=Array.from({length:128},(_,i)=>i+1);
-
-// 每條 reel 建立 seq，然後在 DOM 放 [seq, seq] 雙份
-// 捲動超過第一份時無縫跳回開頭，完全沒有接縫問題
 const seqs=LAPS.map(laps=>{
-  let s=[];
-  for(let l=0;l<laps;l++) s=s.concat(shuffle(ids));
-  return s;
+  let s=[];for(let l=0;l<laps;l++)s=s.concat(shuffle(ids));return s;
 });
-
 const tracks=[document.getElementById('t0'),document.getElementById('t1'),document.getElementById('t2')];
 const reelEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
 
 reelEls.forEach((r,i)=>r.style.width=colWidths[i]+'px');
 
-// 每條 reel 塞兩份 seq（雙 buffer），這樣只要在第一份結束前跳回就永遠無縫
 seqs.forEach((seq,ri)=>{
   const tr=tracks[ri];
-  // 塞兩份
   [...seq,...seq].forEach(id=>{
     const d=document.createElement('div');
     d.className='card';
-    const frame=document.createElement('div');
-    frame.className='card-frame';
-    frame.style.width=frameW+'px';
-    frame.style.height=frameH+'px';
-    applyFrameStyle(frame,id);
-    d.appendChild(frame);
+    const img=document.createElement('img');
+    img.className='card-img';
+    img.src=cardImg(id);
+    img.alt='';
+    img.draggable=false;
+    d.appendChild(img);
     tr.appendChild(d);
   });
 });
 
-// loopPx = 一份 seq 的總高度
 const loopPx=seqs.map(s=>s.length*CARD_H);
-
-// 每條 reel 各自維護一個累積位移（px），不用 elapsed%loop，避免跳接
 const pos=[0,0,0];
 let lastTs=null;
+let spinning=true;
 
 function tick(ts){
-  if(lastTs===null){lastTs=ts;}
-  const dt=ts-lastTs;
-  lastTs=ts;
-
-  seqs.forEach((_,ri)=>{
-    pos[ri]+=dt*speeds[ri]*1.92*0.001*1000; // dt 單位 ms，每秒跑 speeds*1.92*1000 px？
-    // 修正：原本 elapsed*1.92 是每毫秒跑 1.92px → 每秒 1920px
-    // dt ms → pos += dt * speeds * 1.92
-    pos[ri]+=0; // 上面已算，這行是多的，下面重算
-
-    // 當超過一份 seq 就跳回（無縫，因為第二份內容完全一樣）
-    if(pos[ri]>=loopPx[ri]) pos[ri]-=loopPx[ri];
+  if(!spinning)return;
+  if(lastTs===null)lastTs=ts;
+  const dt=ts-lastTs;lastTs=ts;
+  for(let ri=0;ri<3;ri++){
+    pos[ri]+=dt*speeds[ri]*1.92;
+    if(pos[ri]>=loopPx[ri])pos[ri]-=loopPx[ri];
     tracks[ri].style.transform=`translateY(-${pos[ri]}px)`;
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// ══ 取得光條對齊的三個 id ══
+function getCenterIds(){
+  const overlayH=699;
+  const centerY=overlayH*0.41+77;
+  return seqs.map((seq,ri)=>{
+    const cardIdx=Math.floor(pos[ri]/CARD_H)%seq.length;
+    // 光條在畫面內的偏移
+    const localOffset=pos[ri]%CARD_H;
+    const adjustedIdx=Math.floor((pos[ri]+centerY)/CARD_H)%seq.length;
+    const safeIdx=((adjustedIdx%seq.length)+seq.length)%seq.length;
+    return seq[safeIdx];
   });
+}
+
+// ══ Gacha ══
+let currentIds=[1,2,3];
+let currentTab=0;
+
+function doGacha(){
+  if(!spinning)return;
+  spinning=true; // 確保 tick 還在跑再讀位置
+  // 停下來
+  spinning=false;
+  currentIds=getCenterIds();
+  setTimeout(showPanel,350);
+}
+
+function showPanel(){
+  const roleKeys=['近況','挑戰','貴人'];
+  const roleLabel=['近況','挑戰','貴人'];
+
+  // 副標題：三張牌名
+  const names=currentIds.map(id=>getData(id));
+  document.getElementById('panel-names').textContent=
+    names.map((d,i)=>`${roleLabel[i]} ${d.emoji}${d.name}`).join('  ✦  ');
+
+  // 三張卡片：圖片 + 欄位標籤 + 牌名
+  const row=document.getElementById('cards-row');
+  row.innerHTML='';
+  currentIds.forEach((id,i)=>{
+    const d=getData(id);
+    const card=document.createElement('div');
+    card.className='result-card';
+    const img=document.createElement('img');
+    img.className='result-card-img';
+    img.src=cardImg(id);
+    img.alt=d.name;
+    const lbl=document.createElement('div');
+    lbl.className='result-card-label';
+    lbl.textContent=roleLabel[i];
+    const sub=document.createElement('div');
+    sub.style.cssText='font-size:20px;color:#fff;font-weight:700;padding-bottom:10px;letter-spacing:1px;';
+    sub.textContent=`${d.emoji} ${d.name}`;
+    card.appendChild(img);card.appendChild(lbl);card.appendChild(sub);
+    row.appendChild(card);
+  });
+
+  // 內容：每張牌只顯示對應欄位
+  const area=document.getElementById('content-area');
+  area.innerHTML='';
+  currentIds.forEach((id,i)=>{
+    const d=getData(id);
+    const key=roleKeys[i];
+    const block=document.createElement('div');
+    block.className='reading-block';
+    const isPlaceholder=d[key]==='###';
+    block.innerHTML=`
+      <div class="reading-who">${d.emoji} ${d.name} — ${key}</div>
+      <div class="reading-text${isPlaceholder?' placeholder':''}">${d[key]}</div>
+    `;
+    area.appendChild(block);
+    if(i<2){
+      const hr=document.createElement('div');
+      hr.style.cssText='height:1px;background:rgba(255,215,0,0.12);margin:22px 0;';
+      area.appendChild(hr);
+    }
+  });
+  area.scrollTop=0;
+
+  document.getElementById('result-panel').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closePanel(){
+  document.getElementById('result-panel').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
+  spinning=true;lastTs=null;
   requestAnimationFrame(tick);
 }
 
-// 重新正確實作
-pos[0]=pos[1]=pos[2]=0;
-lastTs=null;
-
-function tick2(ts){
-  if(lastTs===null){lastTs=ts;}
-  const dt=ts-lastTs; // ms
-  lastTs=ts;
-
-  for(let ri=0;ri<3;ri++){
-    pos[ri]+=dt*speeds[ri]*1.92; // px，跟原本 elapsed*speeds*1.92 速度一致
-    if(pos[ri]>=loopPx[ri]) pos[ri]-=loopPx[ri];
-    tracks[ri].style.transform=`translateY(-${pos[ri]}px)`;
-  }
-  requestAnimationFrame(tick2);
+function shareToLine(){
+  const roleKeys=['近況','挑戰','貴人'];
+  const roleLabel=['近況牌','挑戰牌','貴人牌'];
+  let msg='✨ 心情拉霸機 — 我的命運結果\n\n';
+  currentIds.forEach((id,i)=>{
+    const d=getData(id);
+    const key=roleKeys[i];
+    msg+=`【${roleLabel[i]}】${d.emoji} ${d.name}\n`;
+    if(d[key]!=='###') msg+=d[key].slice(0,50)+'……\n';
+    msg+='\n';
+  });
+  msg+='👉 快來試試你的命運！';
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`,'_blank');
 }
-requestAnimationFrame(tick2);
 </script>
 </body>
 </html>
