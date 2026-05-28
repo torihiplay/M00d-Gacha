@@ -8,7 +8,8 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
   width:100%;height:100%;
-  overflow:hidden;
+  overflow-y:auto;
+  overflow-x:hidden;
   background:#020510;
   display:flex;align-items:flex-start;justify-content:center;
 }
@@ -224,26 +225,62 @@ html,body{
       <button class="btn-share" onclick="shareToLine()">
         <span style="font-size:32px">💬</span>分享 LINE
       </button>
-      <button class="btn-again" onclick="closePanel()">🔄 再抽一次</button>
+      <button class="btn-again" onclick="againGacha()">🔄 再抽一次</button>
     </div>
   </div>
 </div>
 
 <script>
-// ══ 縮放 ══
+// ══ 縮放：只依據寬度，高度等比延伸 ══
 function scaleApp(){
   const app=document.getElementById('app');
-  const scale=Math.min(window.innerWidth/1080,window.innerHeight/1920);
+  const scale=window.innerWidth/1080;
   app.style.transform=`scale(${scale})`;
-  app.style.marginTop=`${(window.innerHeight-1920*scale)/2}px`;
-  document.body.style.height=window.innerHeight+'px';
+  app.style.transformOrigin='top center';
+  app.style.marginTop='0px';
+  document.body.style.height=(1920*scale)+'px';
 }
 scaleApp();
 window.addEventListener('resize',scaleApp);
 
+// ══ 音樂系統 ══
+const MUSIC_FILES=['1.wav','2.wav','3.wav'];
+let currentAudio=null;
+let currentTrackIndex=-1;
+
+function pickRandomTrack(){
+  return Math.floor(Math.random()*3);
+}
+
+function playMusic(trackIndex){
+  // 停掉目前播放的
+  if(currentAudio){
+    currentAudio.pause();
+    currentAudio.src='';
+    currentAudio=null;
+  }
+  currentTrackIndex=trackIndex;
+  const audio=new Audio(MUSIC_FILES[trackIndex]);
+  audio.loop=true;
+  audio.volume=0.7;
+  audio.play().catch(()=>{
+    // 瀏覽器自動播放限制，等用戶互動後再播
+    document.addEventListener('touchstart',()=>audio.play(),{once:true});
+    document.addEventListener('click',()=>audio.play(),{once:true});
+  });
+  currentAudio=audio;
+}
+
+function switchMusic(){
+  playMusic(pickRandomTrack());
+}
+
+// 頁面載入時隨機選一首
+window.addEventListener('load',()=>{
+  playMusic(pickRandomTrack());
+});
+
 // ══ 解析資料 ══
-// 格式：id -> { name, emoji, 近況, 挑戰, 貴人 }
-// 沒有資料的欄位填 '###'
 const DATA={
   1:{name:'幸運星',emoji:'🌟',
     近況:'你最近正在進入一段「微小幸運開始聚集」的時期。有些事情表面看起來只是巧合，但其實命運已經悄悄偏向你。你可能會發現，原本卡住的人突然回訊息、原本不順的事情突然出現破口，甚至只是走進某個地方，都有種被宇宙偷偷推了一下的感覺。這不是暴富型的幸運，而是「路開始打開」的幸運。很多人抽到幸運星時，人生都正站在下一階段的入口，只是還沒真正意識到。',
@@ -295,7 +332,6 @@ const DATA={
     貴人:'閃電的貴人通常是「突然出現的人」。對方可能很有行動力、很直接，甚至像闖入你人生一樣毫無預警。他會帶來新的資訊、新的世界、新的可能性。有些人抽到閃電貴人時，會在某個極短瞬間遇到改變人生的人。這種貴人不一定陪你很久，但影響非常強烈。他像一道真正的閃電，把你原本灰暗的人生瞬間照亮。你後來可能會發現，很多改變，其實都是從那次相遇開始。'},
 };
 
-// 取資料，沒有的用 ### 佔位
 function getData(id){
   return DATA[id]||{
     name:`No.${String(id).padStart(3,'0')}`,
@@ -304,7 +340,6 @@ function getData(id){
   };
 }
 
-// 圖片路徑
 function cardImg(id){
   return `card_${String(id).padStart(3,'0')}.png`;
 }
@@ -362,14 +397,10 @@ function tick(ts){
 }
 requestAnimationFrame(tick);
 
-// ══ 取得光條對齊的三個 id ══
 function getCenterIds(){
   const overlayH=699;
   const centerY=overlayH*0.41+77;
   return seqs.map((seq,ri)=>{
-    const cardIdx=Math.floor(pos[ri]/CARD_H)%seq.length;
-    // 光條在畫面內的偏移
-    const localOffset=pos[ri]%CARD_H;
     const adjustedIdx=Math.floor((pos[ri]+centerY)/CARD_H)%seq.length;
     const safeIdx=((adjustedIdx%seq.length)+seq.length)%seq.length;
     return seq[safeIdx];
@@ -378,12 +409,9 @@ function getCenterIds(){
 
 // ══ Gacha ══
 let currentIds=[1,2,3];
-let currentTab=0;
 
 function doGacha(){
   if(!spinning)return;
-  spinning=true; // 確保 tick 還在跑再讀位置
-  // 停下來
   spinning=false;
   currentIds=getCenterIds();
   setTimeout(showPanel,350);
@@ -393,12 +421,10 @@ function showPanel(){
   const roleKeys=['近況','挑戰','貴人'];
   const roleLabel=['近況','挑戰','貴人'];
 
-  // 副標題：三張牌名
   const names=currentIds.map(id=>getData(id));
   document.getElementById('panel-names').textContent=
     names.map((d,i)=>`${roleLabel[i]} ${d.emoji}${d.name}`).join('  ✦  ');
 
-  // 三張卡片：圖片 + 欄位標籤 + 牌名
   const row=document.getElementById('cards-row');
   row.innerHTML='';
   currentIds.forEach((id,i)=>{
@@ -419,7 +445,6 @@ function showPanel(){
     row.appendChild(card);
   });
 
-  // 內容：每張牌只顯示對應欄位
   const area=document.getElementById('content-area');
   area.innerHTML='';
   currentIds.forEach((id,i)=>{
@@ -452,7 +477,16 @@ function closePanel(){
   requestAnimationFrame(tick);
 }
 
+// 再抽一次：換歌 + 關閉面板
+function againGacha(){
+  switchMusic();
+  closePanel();
+}
+
 function shareToLine(){
+  // 換歌
+  switchMusic();
+
   const roleKeys=['近況','挑戰','貴人'];
   const roleLabel=['近況牌','挑戰牌','貴人牌'];
   let msg='✨ 心情拉霸機 — 我的命運結果\n\n';
