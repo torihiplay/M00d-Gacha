@@ -1083,16 +1083,31 @@ function shareToLine(){
 
   const roleKeys=['近況','挑戰','貴人'];
   const roleLabel=['近況牌','挑戰牌','貴人牌'];
-  let msg='✨ 心情拉霸機 — 我的命運結果\n\n';
+
+  let msg='🎰 心情拉霸機 — 我的命運結果\n\n';
+
   currentIds.forEach((id,i)=>{
     const d=getData(id);
     const key=roleKeys[i];
-    msg+=`【${roleLabel[i]}】${d.emoji} ${d.name}\n`;
-    if(d[key]!=='###') msg+=d[key].slice(0,50)+'……\n';
+
+    msg+=`【${roleLabel[i]}】\n`;
+    msg+=`${d.emoji} ${d.name}\n`;
+
+    // 每段限制字數，避免 LINE 過長截斷
+    if(d[key]!=='###'){
+      msg+=d[key].slice(0,90)+'……\n';
+    }
+
     msg+='\n';
   });
-  msg+='👉 快來試試你的命運！';
-  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`,'_blank');
+
+  msg+='🔮 快來試試你的命運：\n';
+  msg+='https://torihiplay.github.io/Mood-Gacha./';
+
+  window.open(
+    `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`,
+    '_blank'
+  );
 }
 </script>
 </body>
