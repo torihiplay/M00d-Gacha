@@ -1107,9 +1107,8 @@ function shareToLine(){
     const d = getData(id);
     return `${['🌅','⚡','🌟'][i]} ${labels[i]}｜${d.emoji} ${d.name}`;
   }).join('\n');
-
   const url = 'https://torihiplay.github.io/Mood-Gacha./';
-  const msg = `🔮 心情拉霸機 · 命運揭示\n${'─'.repeat(14)}\n${cards}\n${'─'.repeat(14)}\n👇 抽你的命運\n${url}`;
+  const msg = `🔮 心情拉霸機 · 命運揭示\n\n${cards}\n\n👇 換你試試 👇\n${url}`;
   window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`, '_blank');
 }
 
