@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta property="og:title" content="心情拉霸機 🔮">
 <meta property="og:description" content="來抽你的命運牌">
-<meta property="og:image" content="https://torihiplay.github.io/Mood-Gacha/LOGO.jpg?v=3">
-<meta property="og:url" content="https://torihiplay.github.io/Mood-Gacha/?v=2">
+<meta property="og:image" content="https://torihiplay.github.io/Mood-Gacha/LOGO.jpg">
+<meta property="og:url" content="https://torihiplay.github.io/Mood-Gacha/">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"><title>心情拉霸機</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1107,7 +1107,7 @@ function shareToLine(){
     const d = getData(id);
     return `${['🌅','⚡','🌟'][i]} ${labels[i]}｜${d.emoji} ${d.name}`;
   }).join('\n');
-  const url = 'https://torihiplay.github.io/Mood-Gacha/?v=2';
+  const url = 'https://torihiplay.github.io/Mood-Gacha/';
   const msg = `🔮 心情拉霸機 · 命運揭示\n\n${cards}\n\n👇 換你試試 👇\n${url}`;
   window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`, '_blank');
 }
