@@ -18,12 +18,9 @@ html,body{
   position:absolute;
   top:0;
   left:0;
-
   width:1080px;
   height:1920px;
-
   transform-origin: top left;
-
   background:#020510;
   overflow:hidden;
 }
@@ -176,25 +173,34 @@ html,body{
 }
 
 .panel-btns{
-  display:flex;gap:16px;
+  display:flex;gap:12px;
   padding:16px 24px 36px;flex-shrink:0;
 }
 .btn-share{
   flex:1;padding:22px 0;
   background:linear-gradient(135deg,#06c755,#00a846);
-  color:#fff;font-size:28px;font-weight:900;
+  color:#fff;font-size:26px;font-weight:900;
   border:none;border-radius:16px;cursor:pointer;
   letter-spacing:2px;
-  display:flex;align-items:center;justify-content:center;gap:10px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-save{
+  flex:1;padding:22px 0;
+  background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);
+  color:#e8d5ff;font-size:26px;font-weight:900;
+  border:1.5px solid rgba(180,140,255,0.4);
+  border-radius:16px;cursor:pointer;
+  letter-spacing:2px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
 }
 .btn-again{
   flex:1;padding:22px 0;
   background:linear-gradient(135deg,#c8900a,#ffd700,#c8900a);
-  color:#000;font-size:28px;font-weight:900;
+  color:#000;font-size:26px;font-weight:900;
   border:none;border-radius:16px;cursor:pointer;
   letter-spacing:2px;
 }
-.btn-share:active,.btn-again:active{transform:scale(0.97);}
+.btn-share:active,.btn-save:active,.btn-again:active{transform:scale(0.97);}
 
 #overlay{
   position:absolute;inset:0;
@@ -203,6 +209,41 @@ html,body{
   transition:background 0.3s;
 }
 #overlay.show{background:rgba(0,0,0,0.55);pointer-events:auto;}
+
+/* ── 卡片預覽遮罩 ── */
+#card-preview-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.88);
+  z-index:500;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:24px;
+  padding:20px;
+}
+#card-preview-overlay.show{display:flex;}
+#card-preview-img{
+  width:100%;
+  max-width:560px;
+  border-radius:16px;
+  box-shadow:0 0 60px rgba(180,140,255,0.25);
+  display:block;
+}
+.preview-hint{
+  font-size:22px;color:rgba(255,255,255,0.6);
+  letter-spacing:2px;text-align:center;
+  line-height:1.7;
+}
+.btn-preview-close{
+  padding:18px 56px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:14px;
+  color:#fff;font-size:24px;
+  cursor:pointer;letter-spacing:2px;
+}
+.btn-preview-close:active{transform:scale(0.97);}
 
 /* ── 迎賓畫面 ── */
 #welcome{
@@ -251,6 +292,9 @@ html,body{
 #enter-btn .btn-icon{display:block;font-size:48px;margin-bottom:14px;}
 #enter-btn .btn-hint{display:block;font-size:20px;color:rgba(200,180,255,0.5);margin-top:10px;letter-spacing:2px;font-weight:400;}
 </style>
+
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 </head>
 <body>
 <!-- ── 迎賓畫面 ── -->
@@ -290,11 +334,21 @@ html,body{
     <div class="content-area" id="content-area"></div>
     <div class="panel-btns">
       <button class="btn-share" onclick="shareToLine()">
-        <span style="font-size:32px">💬</span>分享 LINE
+        <span style="font-size:28px">💬</span>LINE
       </button>
-      <button class="btn-again" onclick="againGacha()">🔄 再抽一次</button>
+      <button class="btn-save" onclick="saveCard()">
+        <span style="font-size:28px">📷</span>儲存
+      </button>
+      <button class="btn-again" onclick="againGacha()">🔄 再抽</button>
     </div>
   </div>
+</div>
+
+<!-- ── 卡片預覽遮罩 ── -->
+<div id="card-preview-overlay">
+  <img id="card-preview-img" src="" alt="命運卡片">
+  <div class="preview-hint">長按圖片儲存到相簿 📲</div>
+  <button class="btn-preview-close" onclick="closeCardPreview()">關閉</button>
 </div>
 
 <script>
@@ -327,7 +381,6 @@ html,body{
 
 // ══ 迎賓畫面 ══
 function enterMain(){
-  // 音樂在這裡啟動，保證有用戶互動
   playMusic(pickRandomTrack());
   const w=document.getElementById('welcome');
   w.classList.add('fade-out');
@@ -336,79 +389,39 @@ function enterMain(){
 
 // ══ 手機滿版縮放 ══
 function scaleApp(){
-
-  const app = document.getElementById('app');
-
-  // 只依照手機寬度縮放
-  const scale = window.innerWidth / 1080;
-
-  // 套用縮放
-  app.style.transform = `scale(${scale})`;
-
-  // 左上開始縮放
-  app.style.transformOrigin = 'top left';
-
-  // 讓容器實際高度正確
-  app.style.width = '1080px';
-  app.style.height = '1920px';
-
-  // 修正 body 高度
-  document.body.style.height = `${1920 * scale}px`;
-
-  // 防止橫向卷軸
-  document.body.style.overflowX = 'hidden';
+  const app=document.getElementById('app');
+  const scale=window.innerWidth/1080;
+  app.style.transform=`scale(${scale})`;
+  app.style.transformOrigin='top left';
+  app.style.width='1080px';
+  app.style.height='1920px';
+  document.body.style.height=`${1920*scale}px`;
+  document.body.style.overflowX='hidden';
 }
-
-// 初始
 scaleApp();
-
-// 監聽旋轉
-window.addEventListener('resize', scaleApp);
-
-window.addEventListener('orientationchange', () => {
-  setTimeout(scaleApp, 200);
-});
-
-// 初始呼叫 + 監聽
-window.addEventListener('resize', scaleApp);
-window.addEventListener('orientationchange', () => {
-  setTimeout(scaleApp, 100);   // 螢幕旋轉後延遲一點執行
-});
-scaleApp();
+window.addEventListener('resize',scaleApp);
+window.addEventListener('orientationchange',()=>{setTimeout(scaleApp,200);});
 
 // ══ 音樂系統 ══
 const MUSIC_FILES=['1.wav','2.wav','3.wav'];
 let currentAudio=null;
 let currentTrackIndex=-1;
 
-function pickRandomTrack(){
-  return Math.floor(Math.random()*3);
-}
+function pickRandomTrack(){return Math.floor(Math.random()*3);}
 
 function playMusic(trackIndex){
-  // 停掉目前播放的
-  if(currentAudio){
-    currentAudio.pause();
-    currentAudio.src='';
-    currentAudio=null;
-  }
+  if(currentAudio){currentAudio.pause();currentAudio.src='';currentAudio=null;}
   currentTrackIndex=trackIndex;
   const audio=new Audio(MUSIC_FILES[trackIndex]);
-  audio.loop=true;
-  audio.volume=0.7;
+  audio.loop=true;audio.volume=0.7;
   audio.play().catch(()=>{
-    // 瀏覽器自動播放限制，等用戶互動後再播
     document.addEventListener('touchstart',()=>audio.play(),{once:true});
     document.addEventListener('click',()=>audio.play(),{once:true});
   });
   currentAudio=audio;
 }
 
-function switchMusic(){
-  playMusic(pickRandomTrack());
-}
-
-// 音樂由迎賓畫面的「開始占卜」按鈕觸發，不在這裡自動播
+function switchMusic(){playMusic(pickRandomTrack());}
 
 // ══ 解析資料 ══
 const DATA={
@@ -934,9 +947,7 @@ function getData(id){
   };
 }
 
-function cardImg(id){
-  return `card_${String(id).padStart(3,'0')}.png`;
-}
+function cardImg(id){return `card_${String(id).padStart(3,'0')}.png`;}
 
 // ══ 轉軸 ══
 const CARD_H=233;
@@ -1027,8 +1038,7 @@ function showPanel(){
     card.className='result-card';
     const img=document.createElement('img');
     img.className='result-card-img';
-    img.src=cardImg(id);
-    img.alt=d.name;
+    img.src=cardImg(id);img.alt=d.name;
     const lbl=document.createElement('div');
     lbl.className='result-card-label';
     lbl.textContent=roleLabel[i];
@@ -1071,43 +1081,232 @@ function closePanel(){
   requestAnimationFrame(tick);
 }
 
-// 再抽一次：換歌 + 關閉面板
 function againGacha(){
   switchMusic();
   closePanel();
 }
 
+// ══ LINE 分享（簡短版） ══
 function shareToLine(){
-  // 換歌
   switchMusic();
-
-  const roleKeys=['近況','挑戰','貴人'];
-  const roleLabel=['近況牌','挑戰牌','貴人牌'];
-
-  let msg='🎰 心情拉霸機 — 我的命運結果\n\n';
-
-  currentIds.forEach((id,i)=>{
+  const labels=['近況','挑戰','貴人'];
+  const names=currentIds.map((id,i)=>{
     const d=getData(id);
-    const key=roleKeys[i];
+    return `${labels[i]} ${d.emoji}${d.name}`;
+  }).join('　');
+  const msg=`🎰 心情拉霸機\n${names}\n\n🔮 來抽你的命運：\nhttps://torihiplay.github.io/Mood-Gacha./`;
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`,'_blank');
+}
 
-    msg+=`【${roleLabel[i]}】\n`;
-    msg+=`${d.emoji} ${d.name}\n`;
+// ══ 16色編碼系統 ══
+// 色相每22.5度一個，飽和度85%亮度55%，間距夠大壓縮後仍可辨識
+const PALETTE_16=(()=>{
+  const colors=[];
+  for(let i=0;i<16;i++){
+    const h=i*22.5;
+    const s=0.85,l=0.55;
+    const c=(1-Math.abs(2*l-1))*s;
+    const x=c*(1-Math.abs((h/60)%2-1));
+    const m=l-c/2;
+    let r=0,g=0,b=0;
+    if(h<60){r=c;g=x;}
+    else if(h<120){r=x;g=c;}
+    else if(h<180){g=c;b=x;}
+    else if(h<240){g=x;b=c;}
+    else if(h<300){r=x;b=c;}
+    else{r=c;b=x;}
+    colors.push([
+      Math.round((r+m)*255),
+      Math.round((g+m)*255),
+      Math.round((b+m)*255)
+    ]);
+  }
+  return colors;
+})();
 
-    // 每段限制字數，避免 LINE 過長截斷
-    if(d[key]!=='###'){
-      msg+=d[key].slice(0,90)+'……\n';
-    }
+// id(1~128) → 固定兩色index
+// 16×16=256種組合，足夠覆蓋128張牌且每個牌有唯一對應
+function idToColorPair(id){
+  const n=id-1; // 0~127
+  const i1=n%16;
+  const i2=Math.floor(n/16);
+  return [i1,i2];
+}
 
-    msg+='\n';
+function colorToHex([r,g,b]){
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+// ══ 儲存卡片（html2canvas 截 DOM，完全繞開 canvas taint） ══
+async function saveCard() {
+  const overlay = document.getElementById('card-preview-overlay');
+  const previewImg = document.getElementById('card-preview-img');
+  previewImg.src = '';
+  overlay.classList.add('show');
+
+  try {
+    const card = buildShareCard();
+    card.style.cssText += 'position:fixed;left:-9999px;top:0;z-index:-1;';
+    document.body.appendChild(card);
+
+    // 等圖片全部載入
+    await Promise.all(
+      Array.from(card.querySelectorAll('img')).map(img =>
+        img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })
+      )
+    );
+    // 再等一幀確保渲染
+    await new Promise(r => requestAnimationFrame(r));
+
+    const canvas = await html2canvas(card, {
+      width: 1080,
+      height: 580,
+      scale: 1,
+      useCORS: false,
+      allowTaint: true,
+      backgroundColor: null,
+      logging: false
+    });
+
+    document.body.removeChild(card);
+    previewImg.src = canvas.toDataURL('image/png');
+  } catch (e) {
+    console.error(e);
+    document.body.querySelector('[style*="-9999px"]')?.remove();
+    overlay.classList.remove('show');
+    alert('卡片生成失敗：' + e.message);
+  }
+}
+
+// ══ 建構分享卡片 DOM（1080×580，神秘占卜風） ══
+function buildShareCard() {
+  const labels = ['近況', '挑戰', '貴人'];
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const dateStr = `${now.getFullYear()} · ${pad(now.getMonth()+1)} · ${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = [
+    'width:1080px','height:580px','overflow:hidden','box-sizing:border-box',
+    'background:linear-gradient(135deg,#12090a 0%,#1c1005 35%,#221408 50%,#1c1005 65%,#12090a 100%)',
+    'position:relative','font-family:serif','border-radius:18px',
+    'border:2px solid rgba(180,130,40,0.55)'
+  ].join(';');
+
+  // 中央光暈
+  const glow = el('div', 'position:absolute;inset:0;border-radius:18px;pointer-events:none;' +
+    'background:radial-gradient(ellipse at 50% 45%,rgba(255,210,100,0.11) 0%,transparent 62%)');
+  wrap.appendChild(glow);
+
+  // 內框線
+  wrap.appendChild(el('div',
+    'position:absolute;inset:9px;border-radius:12px;pointer-events:none;' +
+    'border:1px solid rgba(255,210,100,0.18)'));
+
+  // 四角裝飾（純 CSS border）
+  [
+    'top:14px;left:14px;border-top:2px solid rgba(200,160,60,0.6);border-left:2px solid rgba(200,160,60,0.6)',
+    'top:14px;right:14px;border-top:2px solid rgba(200,160,60,0.6);border-right:2px solid rgba(200,160,60,0.6)',
+    'bottom:14px;left:14px;border-bottom:2px solid rgba(200,160,60,0.6);border-left:2px solid rgba(200,160,60,0.6)',
+    'bottom:14px;right:14px;border-bottom:2px solid rgba(200,160,60,0.6);border-right:2px solid rgba(200,160,60,0.6)'
+  ].forEach(s => wrap.appendChild(el('div',
+    `position:absolute;width:28px;height:28px;pointer-events:none;${s}`)));
+
+  // 標題區（上方橫線用 border-top）
+  const header = el('div',
+    'text-align:center;padding:28px 60px 16px;' +
+    'border-bottom:1px solid rgba(200,160,60,0.25);margin:0 50px;');
+  header.innerHTML = `
+    <div style="font-size:34px;font-weight:900;color:#f5d97a;letter-spacing:4px;margin-bottom:7px;
+      text-shadow:0 0 22px rgba(255,200,80,0.45);">✦ 心情拉霸機 · 命運揭示 ✦</div>
+    <div style="font-size:17px;color:rgba(220,180,90,0.52);letter-spacing:3px;">${dateStr}</div>
+  `;
+  wrap.appendChild(header);
+
+  // 三張牌列
+  const row = el('div',
+    'display:flex;justify-content:center;gap:28px;padding:20px 52px 0;align-items:flex-start;');
+
+  currentIds.forEach((id, i) => {
+    const d = getData(id);
+    // 直接取 DOM 已顯示的圖片 src（同一張圖，不重新請求）
+    const domImg = document.querySelectorAll('#cards-row .result-card-img')[i];
+    const imgSrc = domImg ? domImg.src : cardImg(id);
+
+    const col = el('div', 'display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;max-width:272px;');
+
+    // 角色標籤
+    col.appendChild(el('div',
+      'font-size:19px;color:rgba(255,210,100,0.68);letter-spacing:3px;font-weight:700;',
+      labels[i]));
+
+    // 牌框 + 圖片
+    const frame = el('div',
+      'width:228px;height:228px;border-radius:12px;overflow:hidden;' +
+      'border:1.5px solid rgba(180,130,40,0.52);background:#08050a;' +
+      'box-shadow:0 0 20px rgba(180,120,20,0.14),inset 0 0 14px rgba(0,0,0,0.45);' +
+      'position:relative;');
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;';
+    // 牌圖暗角疊加
+    const vignette = el('div',
+      'position:absolute;inset:0;pointer-events:none;' +
+      'background:linear-gradient(to bottom,rgba(0,0,0,0.22) 0%,transparent 28%,transparent 72%,rgba(0,0,0,0.32) 100%)');
+    frame.appendChild(img);
+    frame.appendChild(vignette);
+    col.appendChild(frame);
+
+    // 牌名
+    col.appendChild(el('div',
+      'font-size:21px;color:#f0e0b0;font-weight:700;letter-spacing:1px;text-align:center;' +
+      'text-shadow:0 0 10px rgba(255,180,60,0.28);',
+      `${d.emoji} ${d.name}`));
+
+    row.appendChild(col);
+  });
+  wrap.appendChild(row);
+
+  // 底部：分隔線 + 色塊
+  const footer = el('div',
+    'position:absolute;bottom:0;left:0;right:0;height:56px;' +
+    'display:flex;align-items:center;justify-content:center;gap:0;' +
+    'border-top:1px solid rgba(200,160,60,0.2);');
+
+  const colorsWrap = el('div', 'display:flex;gap:5px;align-items:center;');
+  currentIds.forEach((id, gi) => {
+    const [c1, c2] = idToColorPair(id);
+    [c1, c2].forEach((ci, j) => {
+      const b = el('div',
+        `width:50px;height:18px;border-radius:4px;background:${colorToHex(PALETTE_16[ci])};` +
+        `border:1px solid rgba(255,255,255,0.1);` +
+        (j === 1 && gi < 2 ? 'margin-right:18px;' : ''));
+      colorsWrap.appendChild(b);
+    });
   });
 
-  msg+='🔮 快來試試你的命運：\n';
-  msg+='https://torihiplay.github.io/Mood-Gacha./';
+  const wm = el('div',
+    'position:absolute;right:26px;bottom:14px;' +
+    'font-size:13px;color:rgba(200,170,80,0.2);letter-spacing:1px;',
+    'mood-gacha');
 
-  window.open(
-    `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`,
-    '_blank'
-  );
+  footer.appendChild(colorsWrap);
+  wrap.appendChild(footer);
+  wrap.appendChild(wm);
+
+  return wrap;
+}
+
+// ── 輔助：快速建立帶 style 的 div ──
+function el(tag, style, text) {
+  const e = document.createElement(tag);
+  if (style) e.style.cssText = style;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function closeCardPreview(){
+  document.getElementById('card-preview-overlay').classList.remove('show');
 }
 </script>
 </body>
