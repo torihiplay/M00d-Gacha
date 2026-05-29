@@ -2,6 +2,10 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<meta property="og:title" content="心情拉霸機 🔮">
+<meta property="og:description" content="來抽你的命運牌">
+<meta property="og:image" content="https://torihiplay.github.io/Mood-Gacha./LOGO.jpg">
+<meta property="og:url" content="https://torihiplay.github.io/Mood-Gacha./">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"><title>心情拉霸機</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -89,7 +93,7 @@ html,body{
 #result-panel{
   position:absolute;
   bottom:0;left:4%;right:4%;
-  height:88%;
+  max-height:92%;
   background:linear-gradient(170deg,#0a0820 0%,#0d1535 40%,#0a0820 100%);
   border-top:2px solid rgba(255,215,0,0.5);
   border-radius:36px 36px 0 0;
@@ -107,6 +111,8 @@ html,body{
   border-radius:3px;
   margin:14px auto 0;flex-shrink:0;
 }
+
+
 .panel-title{
   text-align:center;font-size:38px;font-weight:900;
   color:#ffd700;letter-spacing:3px;
@@ -148,6 +154,8 @@ html,body{
   flex:1;overflow-y:auto;
   padding:24px 28px 16px;
   -webkit-overflow-scrolling:touch;
+    min-height:0;
+
 }
 .content-area::-webkit-scrollbar{width:4px;}
 .content-area::-webkit-scrollbar-thumb{background:rgba(255,215,0,0.3);border-radius:2px;}
@@ -938,6 +946,8 @@ const DATA={
     挑戰:'地球最大的問題，是容易失去中心。當你開始接觸太多資訊、太多選擇時，你可能會突然不知道自己到底想要什麼。你最近很容易被外界影響，一下想改變人生，一下又懷疑自己。這段時間要小心「方向感崩潰」。世界很大沒錯，但不是每條路都適合你。真正重要的，不是一直往外看，而是不要在探索的過程裡，把最原本的自己弄丟。沒有根的人，再自由也會漂流。',
     貴人:'你的貴人是一個能帶你看見更大世界的人。他可能來自不同背景、不同文化，或擁有完全不同的人生經驗。跟他相處時，你會突然發現，原來人生還有別種活法。地球貴人最大的特徵，是拓展你的視野。他不一定直接幫助你成功，但會讓你的世界變大。你最近真正需要的，不只是安慰，而是一個能把你從舊世界帶出去的人。有些相遇，會直接改變一個人的宇宙。'},
   };
+
+
 
 function getData(id){
   return DATA[id]||{
