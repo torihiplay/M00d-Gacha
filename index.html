@@ -94,7 +94,7 @@ html,body{
   position:absolute;
   bottom:0;left:4%;right:4%;
   max-height:92%;
-  padding-bottom:50px;
+  padding-bottom:8%;
   background:linear-gradient(170deg,#0a0820 0%,#0d1535 40%,#0a0820 100%);
   border-top:2px solid rgba(255,215,0,0.5);
   border-radius:36px 36px 0 0;
@@ -357,10 +357,8 @@ html,body{
 <div id="card-preview-overlay">
   <img id="card-preview-img" src="" alt="命運卡片">
   <div class="preview-hint">長按圖片儲存到相簿 📲</div>
-<div style="display:flex;gap:12px;">
-  <button class="btn-preview-close" onclick="shareCardImage()">🔗 分享圖片</button>
   <button class="btn-preview-close" onclick="closeCardPreview()">關閉</button>
-</div></div>
+</div>
 
 <script>
 // ══ 星空畫布 ══
@@ -434,6 +432,7 @@ function playMusic(trackIndex){
 
 function switchMusic(){playMusic(pickRandomTrack());}
 
+// ══ 解析資料 ══
 // ══ 解析資料 ══
 const DATA={
   1:{name:'幸運星',emoji:'🌟',
@@ -1321,35 +1320,9 @@ function el(tag, style, text) {
   return e;
 }
 
-
-async function shareCardImage() {
-  const img = document.getElementById('card-preview-img');
-  if (!img.src) return;
-  try {
-    const res = await fetch(img.src);
-    const blob = await res.blob();
-    const file = new File([blob], '命運揭示.png', { type: 'image/png' });
-    if (navigator.share && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: '心情拉霸機 · 命運揭示',
-        text: '🔮 來抽你的命運：https://torihiplay.github.io/Mood-Gacha./'
-      });
-    } else {
-      const a = document.createElement('a');
-      a.href = img.src;
-      a.download = '命運揭示.png';
-      a.click();
-    }
-  } catch (e) {
-    if (e.name !== 'AbortError') alert('分享失敗：' + e.message);
-  }
-}
-
 function closeCardPreview(){
   document.getElementById('card-preview-overlay').classList.remove('show');
 }
-
 </script>
 </body>
 </html>
